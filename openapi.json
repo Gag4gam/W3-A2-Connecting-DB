@@ -1,0 +1,117 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Task API",
+    "version": "1.0",
+    "description": "Basic Task API (CRUD)"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root of the API",
+        "responses": {
+          "200": { "description": "API information" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": { "description": "API status" }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "summary": "list all tasks",
+        "responses": {
+          "200": { "description": "Array with the list of tasks" }
+        }
+      },
+      "post": {
+        "summary": "Create a new task",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "example": "Buy milk" }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Task created successfully" },
+          "400": { "description": "Invalid request (missing title)" }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "summary": "find a task by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Task found" },
+          "404": { "description": "Task not found" }
+        }
+      },
+      "put": {
+        "summary": "update a task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "example": "Wash dishes" },
+                  "done": { "type": "boolean", "example": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Task updated successfully" },
+          "400": { "description": "Emmpty/invalid body" },
+          "404": { "description": "Unknown id" }
+        }
+      },
+      "delete": {
+        "summary": "Remove a task by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Task removed (No Content)" },
+          "404": { "description": "Unknown id" }
+        }
+      }
+    }
+  }
+}

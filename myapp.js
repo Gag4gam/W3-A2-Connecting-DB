@@ -2,9 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
 const app = express();
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./openapi.json');
 const port = 3000;
 
 app.use(express.json());
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const tasks = [{
   id: 1,  title: 'Wash the dishes',  done: false},
