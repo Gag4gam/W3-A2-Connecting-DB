@@ -10,11 +10,22 @@ app.use(express.json());
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-const tasks = [{
-  id: 1,  title: 'Wash the dishes',  done: false},
-{ id: 2,  title: 'clean the house',  done: true},
-{ id: 3,  title: 'walk the dog',  done: false},
+
+const initialTasks = [
+  { id: 1, title: 'Wash the dishes', done: false },
+  { id: 2, title: 'clean the house', done: true },
+  { id: 3, title: 'walk the dog', done: false }
 ];
+
+let tasks = JSON.parse(JSON.stringify(initialTasks));
+
+app.post('/reset', (req, res) => {
+  tasks = JSON.parse(JSON.stringify(initialTasks));
+  res.status(200).json({
+    message: 'Tasks reset to initial state',
+    tasks: tasks
+  });
+});
 
 app.get('/', (req, res) => {
   res.json({

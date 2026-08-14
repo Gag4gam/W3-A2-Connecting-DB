@@ -22,6 +22,16 @@
         }
       }
     },
+    "/reset": {
+      "post": {
+        "summary": "reset the list of tasks to the initial state",
+        "responses": {
+          "200": {
+            "description": "tasks reset to initial state"
+          } 
+        }
+      }
+    },
     "/tasks": {
       "get": {
         "summary": "list all tasks",
