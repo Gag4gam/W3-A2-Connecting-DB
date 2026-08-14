@@ -28,7 +28,8 @@ app.get('/tasks', (req, res) => {
   res.json(tasks);
 });
 
-// because I was using windows had to test with curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" in the cmd as otherwise it wouldn't read de ' properly
+// because I was using windows had to test with/;
+// curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" in the cmd as otherwise it wouldn't read de ' properly
 
 app.get('/tasks/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
@@ -55,6 +56,48 @@ app.post('/tasks', (req, res) => {
   res.status(201).json(newTask);
 });
 
+app.put('/tasks/:id', (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) {
+    return res.status(404).json({ error: 'Unknown id' });
+  }
+
+  const { title, done } = req.body;
+
+  if (title === undefined && done === undefined) {
+    return res.status(400).json({ error: 'Empty/invalid body' });
+  }
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim() === '') {
+      return res.status(400).json({ error: 'Empty/invalid body' });
+    }
+    task.title = title.trim();
+  }
+
+  if (done !== undefined) {
+    if (typeof done !== 'boolean') {
+      return res.status(400).json({ error: 'Empty/invalid body' });
+    }
+    task.done = done;
+  }
+
+  res.json(task);
+});
+
+// change title: curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"title\": \"Apenas o titulo mudou\"}"
+// change done : curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"done\": true}"
+
+app.delete('/tasks/:id', (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const taskIndex = tasks.findIndex(t => t.id === taskId);
+  if (taskIndex === -1) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  const deletedTask = tasks.splice(taskIndex, 1);
+  return res.status(204).json({ message: 'No content', task: deletedTask });
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
