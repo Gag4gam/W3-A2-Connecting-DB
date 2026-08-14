@@ -1,4 +1,5 @@
 {
+  "start": "nodemon index.js",
   "name": "week-2",
   "version": "1.0.0",
   "description": "",
@@ -11,7 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1"
-  },
-  "devDependencies": {}
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14"
+  }
 }
