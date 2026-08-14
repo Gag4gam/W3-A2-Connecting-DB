@@ -4,6 +4,8 @@ const router = express.Router();
 const app = express();
 const port = 3000;
 
+app.use(express.json());
+
 const tasks = [{
   id: 1,  title: 'Wash the dishes',  done: false},
 { id: 2,  title: 'clean the house',  done: true},
@@ -26,6 +28,8 @@ app.get('/tasks', (req, res) => {
   res.json(tasks);
 });
 
+// because I was using windows had to test with curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" in the cmd as otherwise it wouldn't read de ' properly
+
 app.get('/tasks/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
   const task = tasks.find(t => t.id === taskId);
@@ -34,11 +38,25 @@ app.get('/tasks/:id', (req, res) => {
   } else {
     res.status(404).json({error: 'Task not found'});
   }
-
-  res.json(tasks);
 });
   
+app.post('/tasks', (req, res) => {
+  const { title } = req.body;
+  if (!title || typeof title !== 'string' || title.trim() === '') {
+    return res.status(400).json({ error: 'Bad Request'});
+  }
+  const newTask = {
+    id: tasks.length + 1,
+    title: title.trim(),
+    done: false
+  };
+
+  tasks.push(newTask);
+  res.status(201).json(newTask);
+});
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
