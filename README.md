@@ -1,6 +1,7 @@
+
 # Task API with SQLite Database
 
-A RESTful Task Management API built with **Node.js**, **Express**, and **better-sqlite3**, featuring persistent data storage and interactive Swagger UI documentation.
+A restful Task Management API built with **Node.js**, **Express**, and **better-sqlite3**, featuring persistent data storage and interactive Swagger UI documentation.
 
 ---
 
@@ -34,6 +35,8 @@ Swagger Documentation: http://localhost:3000/docs
 
 Below is a snapshot of the tasks table visualized in DB Browser for SQLite:
 
+<img width="1037" height="661" alt="Captura de tela 2026-08-18 025628" src="https://github.com/user-attachments/assets/9e0ade5a-7144-40be-9646-4e8ff4711989" />
+
 ### Example SQL Query & Results
 
 The following queries were executed to batch-update the status of all existing tasks to completed (done = 1) and inspect the entire table:
@@ -45,23 +48,25 @@ SELECT * FROM tasks;
 
 ### Result Table:
 
-id    title              done  
-1     Wash the dishes    1
-2     clean the house    1
-3     walk the dog       1
-4     play video games   1 
-5     Buy MIlk           1
-6     Buy Vodka          1
+| id | title             | done |
+|:--:|:------------------|:----:|
+| 1  | Wash the dishes   |  1   |
+| 2  | clean the house   |  1   |
+| 3  | walk the dog      |  1   |
+| 4  | play video games  |  1   |
+| 5  | Buy MIlk          |  1   |
+| 6  | Buy Vodka         |  1   |
 
 
 ### API Endpoints
 
-Method,       Endpoint,       Description,                              Status Code (Success / Error)
-GET,          /,              API Metadata,                             200 OK
-GET,          /health,        Health Check,                             200 OK
-GET,          /tasks,         List all tasks,                           200 OK
-GET,          /tasks/:id,     Get task by ID,                           200 OK / 404 Not Found
-POST,         /tasks,         Create a new task,                        201 Created / 400 Bad Request
-PUT,          /tasks/:id,     Update task title and/or done status,     "200 OK / 400 Bad Request, 404 Not Found"
-DELETE,       /tasks/:id,     Delete task by ID,                        204 No Content / 404 Not Found
-POST,         /reset,         Reset and reseed sample tasks,            200 OK
+| Method | Endpoint       | Description                             | Status Code (Success / Error)                 |
+|:------:|:---------------|:----------------------------------------|:---------------------------------------------:|
+|GET     | /,             | API Metadata,                           | 200 OK                                        |
+|GET     | /health,       | Health Check,                           | 200 OK                                        |
+|GET     | /tasks,        | List all tasks,                         | 200 OK                                        |
+|GET     | /tasks/:id,    | Get task by ID,                         | 200 OK / 404 Not Found                        |
+|POST    | /tasks,        | Create a new task,                      | 201 Created / 400 Bad Request                 |
+|PUT     | /tasks/:id,    | Update task title and/or done status,   | "200 OK / 400 Bad Request, 404 Not Found"     |
+|DELETE  | /tasks/:id,    | Delete task by ID,                      | 204 No Content / 404 Not Found                |
+|POST    | /reset,        | Reset and reseed sample tasks,          | 200 OK                                        |
