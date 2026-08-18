@@ -1,18 +1,20 @@
 require('dotenv').config();
 const express = require('express');
-const {initDB} = require('./db');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./openapi.json');
+
 const Database = require('better-sqlite3');
 const db = new Database('tasks.db');
 const bodyParser = require('body-parser');
 const router = express.Router();
+
 const app = express();
 const port = 3000;
+const { pool, initDB } = require('./db');
 
 app.use(express.json());
-
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 
 initDB().catch(err => {
   console.error('Failed to initialize database:', err);
@@ -43,7 +45,6 @@ const initialTasks = [
   { id: 3, title: 'walk the dog', done: false }
 ];
 
-let tasks = JSON.parse(JSON.stringify(initialTasks));
 
 app.post('/reset', (req, res) => {
   tasks = JSON.parse(JSON.stringify(initialTasks));
@@ -67,22 +68,32 @@ app.get('/health', (req, res) => {
 
 //To get entire list of tasks, you can use the following curl command:
 //curl -i http://localhost:3000/tasks
-app.get('/tasks', (req, res) => {
-  const tasks = db.prepare('SELECT * FROM tasks').all();
-  res.json(tasks);
+app.get('/tasks', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tasks ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching tasks:', err);
+    res.status(500).json({ error: 'database Error' });
+  }
 });
 
 // because I was using windows had to test with:
 // curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" 
 // in the cmd as otherwise it wouldn't read de """" properly
 
-app.get('/tasks/:id', (req, res) => {
-  const taskId = parseInt(req.params.id);
-  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
-  if (task) {
-    res.json(task);
-  } else {
-    res.status(404).json({error: 'Task not found'});
+app.get('/tasks/:id', async (req, res) => {
+  const taskId = parseInt(req.params.id, 10);
+  try {
+    const result = await pool.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Task not found' });
+    }
+  } catch (err) {
+    console.error('Error fetching task by id:', err);
+    res.status(500).json({ error: 'Database error' });
   }
 });
 
