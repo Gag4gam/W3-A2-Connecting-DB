@@ -68,7 +68,7 @@ app.get('/tasks', (req, res) => {
 
 // because I was using windows had to test with:
 // curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" 
-// in the cmd as otherwise it wouldn't read de '' properly
+// in the cmd as otherwise it wouldn't read de """" properly
 
 app.get('/tasks/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
@@ -79,7 +79,9 @@ app.get('/tasks/:id', (req, res) => {
     res.status(404).json({error: 'Task not found'});
   }
 });
-  
+
+//create a new task 
+
 app.post('/tasks', (req, res) => {
   const { title } = req.body;
   if (!title || typeof title !== 'string' || title.trim() === '') {
@@ -89,10 +91,12 @@ app.post('/tasks', (req, res) => {
   res.status(201).json(newTask);
 });
 
+// update a task by id
+
 app.put('/tasks/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) {
+  const taskup = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
+  if (!taskup) {
     return res.status(404).json({ error: 'Unknown id' });
   }
 
@@ -106,31 +110,39 @@ app.put('/tasks/:id', (req, res) => {
     if (typeof title !== 'string' || title.trim() === '') {
       return res.status(400).json({ error: 'Empty/invalid body' });
     }
-    task.title = title.trim();
+    taskup.title = title.trim();
   }
 
   if (done !== undefined) {
     if (typeof done !== 'boolean') {
       return res.status(400).json({ error: 'Empty/invalid body' });
     }
-    task.done = done;
+    taskup.done = done;
   }
+  
+  const task = db.prepare('UPDATE tasks SET title = ?, done = ? WHERE id = ?').run(taskup.title, taskup.done ? 1 : 0, taskId);
 
-  res.json(task);
+  const updatedTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
+  res.json(updatedTask);
 });
 
-// change title: curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"title\": \"Apenas o titulo mudou\"}"
+// change title: curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"title\": \"title change\"}"
 // change done : curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"done\": true}"
+
+
+///delete a task by id
 
 app.delete('/tasks/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
-  const taskIndex = tasks.findIndex(t => t.id === taskId);
-  if (taskIndex === -1) {
+  const tasks = db.prepare('DELETE FROM tasks WHERE id = ?').run(taskId);
+  if (tasks.changes === 0) {
     return res.status(404).json({ error: 'Task not found' });
   }
-  const deletedTask = tasks.splice(taskIndex, 1);
-  return res.status(204).json({ message: 'No content', task: deletedTask });
+  return res.status(204).json({ message: 'No content' });
 });
+
+
+//port message
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
