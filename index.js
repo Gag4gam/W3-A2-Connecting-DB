@@ -85,13 +85,7 @@ app.post('/tasks', (req, res) => {
   if (!title || typeof title !== 'string' || title.trim() === '') {
     return res.status(400).json({ error: 'Bad Request'});
   }
-  const newTask = {
-    id: tasks.length + 1,
-    title: title.trim(),
-    done: false
-  };
-
-  tasks.push(newTask);
+  const newTask = db.prepare('INSERT INTO tasks (title, done) VALUES (?,?)').run(title.trim(), 0);
   res.status(201).json(newTask);
 });
 
