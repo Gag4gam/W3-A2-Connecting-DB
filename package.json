@@ -15,6 +15,7 @@
     "better-sqlite3": "^13.0.3",
     "express": "^5.2.1",
     "nodemon": "^3.1.14",
+    "pg": "^8.23.0",
     "swagger-ui-express": "^5.0.1"
   }
 }
