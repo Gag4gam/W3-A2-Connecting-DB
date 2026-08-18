@@ -61,6 +61,8 @@ app.get('/health', (req, res) => {
   res.json({status: 'ok'});
 });
 
+//To get entire list of tasks, you can use the following curl command:
+//curl -i http://localhost:3000/tasks
 app.get('/tasks', (req, res) => {
   const tasks = db.prepare('SELECT * FROM tasks').all();
   res.json(tasks);
