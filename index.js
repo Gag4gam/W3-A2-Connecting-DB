@@ -1,4 +1,6 @@
+require('dotenv').config();
 const express = require('express');
+const {initDB} = require('./db');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./openapi.json');
 const Database = require('better-sqlite3');
@@ -12,7 +14,9 @@ app.use(express.json());
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-
+initDB().catch(err => {
+  console.error('Failed to initialize database:', err);
+});
 
 //creating databse
 db.exec(`
