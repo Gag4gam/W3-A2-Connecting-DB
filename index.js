@@ -2,57 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./openapi.json');
-
-const Database = require('better-sqlite3');
-const db = new Database('tasks.db');
-const bodyParser = require('body-parser');
-const router = express.Router();
+const { pool, initDB } = require('./db');
 
 const app = express();
 const port = 3000;
-const { pool, initDB } = require('./db');
 
 app.use(express.json());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-
+// Initialize the PostgreSQL database and seed it with initial tasks if empty
 initDB().catch(err => {
   console.error('Failed to initialize database:', err);
 });
 
-//creating databse
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY,
-    title TEXT NOT NULL,
-    done INTEGER DEFAULT 0
-  );
-`);
-
-const countResult = db.prepare('SELECT COUNT(*) AS count FROM tasks').get();
-
-if (countResult.count === 0) {
-  const insertTask = db.prepare('INSERT INTO tasks (title, done) VALUES (?, ?)');
-  insertTask.run('Wash the dishes', 0);
-  insertTask.run('clean the house', 1);
-  insertTask.run('walk the dog', 0);
-}
-
-//tasks for reset endpoint
-const initialTasks = [
-  { id: 1, title: 'Wash the dishes', done: false },
-  { id: 2, title: 'clean the house', done: true },
-  { id: 3, title: 'walk the dog', done: false }
-];
-
-
-app.post('/reset', (req, res) => {
-  tasks = JSON.parse(JSON.stringify(initialTasks));
-  res.status(200).json({
-    message: 'Tasks reset to initial state',
-    tasks: tasks
-  });
-});
+//Root & Health endpoints
 
 app.get('/', (req, res) => {
   res.json({
@@ -66,6 +29,28 @@ app.get('/health', (req, res) => {
   res.json({status: 'ok'});
 });
 
+// Reset endpoint (Seeds back to initial 3 tasks)
+app.post('/reset', async (req, res) => {
+  try {
+    await pool.query('TRUNCATE TABLE tasks RESTART IDENTITY');
+    await pool.query(`
+      INSERT INTO tasks (title, done) VALUES 
+        ('Wash the dishes', false),
+        ('clean the house', true),
+        ('walk the dog', false);
+    `);
+    const tasks = await pool.query('SELECT * FROM tasks ORDER BY id ASC');
+    res.status(200).json({
+      message: 'Tasks reset to initial state',
+      tasks: tasks.rows,
+    });
+  } catch (err) {
+    console.error('Error resetting tasks:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// GET /tasks
 //To get entire list of tasks, you can use the following curl command:
 //curl -i http://localhost:3000/tasks
 app.get('/tasks', async (req, res) => {
@@ -81,7 +66,7 @@ app.get('/tasks', async (req, res) => {
 // because I was using windows had to test with:
 // curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d "{""title"":""play video games""}" 
 // in the cmd as otherwise it wouldn't read de """" properly
-
+///GET /tasks/:ID
 app.get('/tasks/:id', async (req, res) => {
   const taskId = parseInt(req.params.id, 10);
   try {
@@ -98,7 +83,7 @@ app.get('/tasks/:id', async (req, res) => {
 });
 
 //create a new task 
-
+//POST /tasks
 app.post('/tasks', async(req, res) => {
   const { title } = req.body;
   if (!title || typeof title !== 'string' || title.trim() === '') {
@@ -111,12 +96,11 @@ app.post('/tasks', async(req, res) => {
     console.error('Error creating task:', err);
     res.status(500).json({ error: 'Database error' });
   }
-  const newTask = db.prepare('INSERT INTO tasks (title, done) VALUES (?,?)').run(title.trim(), 0);
   res.status(201).json(newTask);
 });
 
 // update a task by id
-
+// PUT /tasks/:id
 app.put('/tasks/:id', async (req, res) => {
   const taskId = parseInt(req.params.id, 10);
   const { title, done } = req.body;
@@ -163,7 +147,7 @@ app.put('/tasks/:id', async (req, res) => {
 
 
 ///delete a task by id
- 
+/// DELETE /tasks/:id
 
 app.delete('/tasks/:id', async (req, res) => {
   const taskId = parseInt(req.params.id, 10);
