@@ -99,10 +99,17 @@ app.get('/tasks/:id', async (req, res) => {
 
 //create a new task 
 
-app.post('/tasks', (req, res) => {
+app.post('/tasks', async(req, res) => {
   const { title } = req.body;
   if (!title || typeof title !== 'string' || title.trim() === '') {
     return res.status(400).json({ error: 'Bad Request'});
+  }
+  try {
+    const result = await pool.query('INSERT INTO tasks (title, done) VALUES ($1, $2) RETURNING *', [title, false]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating task:', err);
+    res.status(500).json({ error: 'Database error' });
   }
   const newTask = db.prepare('INSERT INTO tasks (title, done) VALUES (?,?)').run(title.trim(), 0);
   res.status(201).json(newTask);
@@ -110,54 +117,69 @@ app.post('/tasks', (req, res) => {
 
 // update a task by id
 
-app.put('/tasks/:id', (req, res) => {
-  const taskId = parseInt(req.params.id);
-  const taskup = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
-  if (!taskup) {
-    return res.status(404).json({ error: 'Unknown id' });
-  }
-
+app.put('/tasks/:id', async (req, res) => {
+  const taskId = parseInt(req.params.id, 10);
   const { title, done } = req.body;
 
+  // Validate body: at least one field must be provided
   if (title === undefined && done === undefined) {
     return res.status(400).json({ error: 'Empty/invalid body' });
   }
 
-  if (title !== undefined) {
-    if (typeof title !== 'string' || title.trim() === '') {
-      return res.status(400).json({ error: 'Empty/invalid body' });
-    }
-    taskup.title = title.trim();
+  if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+    return res.status(400).json({ error: 'Empty/invalid body' });
   }
 
-  if (done !== undefined) {
-    if (typeof done !== 'boolean') {
-      return res.status(400).json({ error: 'Empty/invalid body' });
-    }
-    taskup.done = done;
+  if (done !== undefined && typeof done !== 'boolean') {
+    return res.status(400).json({ error: 'Empty/invalid body' });
   }
-  
-  const task = db.prepare('UPDATE tasks SET title = ?, done = ? WHERE id = ?').run(taskup.title, taskup.done ? 1 : 0, taskId);
 
-  const updatedTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId);
-  res.json(updatedTask);
+  try {
+    // First, fetch the current task to preserve unmodified fields
+    const current = await pool.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: 'Unknown id' });
+    }
+
+    const newTitle = title !== undefined ? title.trim() : current.rows[0].title;
+    const newDone = done !== undefined ? done : current.rows[0].done;
+
+    const result = await pool.query(
+      'UPDATE tasks SET title = $1, done = $2 WHERE id = $3 RETURNING *',
+      [newTitle, newDone, taskId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating task:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // change title: curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"title\": \"title change\"}"
 // change done : curl -i -X PUT http://localhost:3000/tasks/1 -H "Content-Type: application/json" -d "{\"done\": true}"
 
 
-///delete a task by id
 
-app.delete('/tasks/:id', (req, res) => {
-  const taskId = parseInt(req.params.id);
-  const tasks = db.prepare('DELETE FROM tasks WHERE id = ?').run(taskId);
-  if (tasks.changes === 0) {
-    return res.status(404).json({ error: 'Task not found' });
+
+///delete a task by id
+ 
+
+app.delete('/tasks/:id', async (req, res) => {
+  const taskId = parseInt(req.params.id, 10);
+  try {
+    const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [taskId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Unknown id' });
+    }
+    return res.status(204).json();
+  } catch (err) {
+    console.error('Error deleting task:', err);
+    res.status(500).json({ error: 'Database error' });
   }
-  return res.status(204).json({ message: 'No content' });
 });
 
+//curl -i -X DELETE http://localhost:3000/tasks/
 
 //port message
 
