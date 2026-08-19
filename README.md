@@ -1,3 +1,4 @@
+
 # Task API with PostgreSQL & Docker
 
 A RESTful Task Management API built with **Node.js**, **Express**, and and **PostgreSQL** (`pg`), running entirely in containerized environments via **Docker Compose** with persistent storage volumes and interactive Swagger UI documentation.
@@ -79,3 +80,5 @@ Keep-Alive: timeout=5
 Data persists inside a named Docker volume (taskdata).
 
 Database Inspection via psql:
+
+<img width="390" height="350" alt="Captura de tela 2026-08-19 002702" src="https://github.com/user-attachments/assets/0a026750-6bab-4635-bd98-7a3f07857cd6" />
