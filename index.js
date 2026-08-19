@@ -25,8 +25,21 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/health', (req, res) => {
-  res.json({status: 'ok'});
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+
+    res.status(200).json({
+      status: 'ok',
+      db: 'ok'
+    });
+  } catch (err) {
+    console.error('Health check DB error:', err);
+    res.status(503).json({
+      status: 'error',
+      db: 'down'
+    });
+  }
 });
 
 // Reset endpoint (Seeds back to initial 3 tasks)
