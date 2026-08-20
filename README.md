@@ -1,84 +1,77 @@
+# Auth Practice API with Supabase & Express
 
-# Task API with PostgreSQL & Docker
-
-A RESTful Task Management API built with **Node.js**, **Express**, and and **PostgreSQL** (`pg`), running entirely in containerized environments via **Docker Compose** with persistent storage volumes and interactive Swagger UI documentation.
+A secured RESTful API built with **Node.js**, **Express**, and **Supabase Auth**. It implements full user authentication (sign-up, login, logout) alongside route protection using custom middleware and interactive Swagger UI documentation with Bearer token support.
 
 ---
 
-## Running the Project
+### ⚙️ Environment Configuration
 
-Start the entire application stack (Node.js API + PostgreSQL Database) in one command:
+Clone the repository:
+   ```bash
+   git clone <YOUR_REPO_URL>
+   cd <YOUR_REPO_FOLDER>
+   ```
+   
+Copy .env.example into a new .env file:
+  ```bash
+  cp .env.example .env
+  ```
+Fill in your Supabase credentials in .env:
+  ```bash
+  SUPABASE_URL=[https://your-project-id.supabase.co](https://your-project-id.supabase.co)
+  SUPABASE_KEY=your_supabase_anon_key
+  PORT=3000
+  ```
 
-```bash
-docker compose up --build
-```
+### Running the Project
 
-API Server: http://localhost:3000
+Install dependencies and start the server with:
 
-Swagger Documentation: http://localhost:3000/docs
+  ```bash
+  npm install
+  node index.js
+  ```
 
-TO STOP THE SERVICES:
+- Server: http://localhost:3000
 
-```bash
-docker compose down
-```
+- Interactive Documentation (Swagger UI): http://localhost:3000/docs
 
-### Environment Variables
+### API Reference
 
-The application uses environment variables for database connectivity.
+| Method | Endpoint           | Auth Required? | Description                                     | Success Status     | Error Statuses                       |
+|:------:|:-------------------|:---------------|:------------------------------------------------|:-------------------|-------------------------------------:|
+|GET     | /public/info       | NO             | Public lobby endpoint                           | 200 OK             | -                                    |
+|POST    | /auth/signup       | NO             | Register a new user with email & password	     | 201 Created        | 400 Bad Request                      |
+|POST    | /auth/login        | NO             | Authenticate user and receive JWT access_token  | 200 OK             | 400 Bad Request, 401 Unauthorized    |
+|GET     | /protected/profile | YES            | Returns authenticated user profile metadata     | 200 OK             | 401 Unauthorized                     |
+|POST    | /tasks,            | YES            | Revokes user session and logs out               | 204 No Content     | 401 Unauthorized                     |
 
-Create a .env file in the root directory (based on .env.example):
+### Interactive Documentation (Swagger UI)
+Protected endpoints can be tested directly from the browser:
 
-```bash
-DATABASE_URL=postgres://username:password@localhost:5432/database
-```
+1. Navigate to http://localhost:3000/docs.
+2. Execute POST /auth/login to obtain an access_token.
+3. Click the green Authorize (lock) button at the top right, paste the token, and click Authorize.
+4. Test any protected route (/protected/profile, /auth/logout).
 
+### Swagger UI Screenshot:
 
-### API Endpoints
-
-| Method | Endpoint       | Description                             | Status Code (Success / Error)                 |
-|:------:|:---------------|:----------------------------------------|:---------------------------------------------:|
-|GET     | /,             | API Metadata,                           | 200 OK                                        |
-|GET     | /health,       | Health Check,                           | 200 OK                                        |
-|GET     | /tasks,        | List all tasks,                         | 200 / 500 Internal ServererrorOK              |
-|GET     | /tasks/:id,    | Get task by ID,                         | 200 OK / 404 Not Found                        |
-|POST    | /tasks,        | Create a new task,                      | 201 Created / 400 Bad Request                 |
-|PUT     | /tasks/:id,    | Update task title and/or done status,   | 200 OK / 400 Bad Request / 404 Not Found      |
-|DELETE  | /tasks/:id,    | Delete task by ID,                      | 204 No Content / 404 Not Found                |
-|POST    | /reset,        | Reset and reseed sample tasks,          | 200 OK/ 500 Internal Server Error             |
-
-
-### Sample Request & Response (curl -i)
-
-Creating a new task:
-```bash
-
-curl -i -X POST http://localhost:3000/tasks \ -H "Content-Type: application/json" \ -d '{"title": "Deploy to production"}'
-```
-
-  Response:
-
-```bash
-  HTTP/1.1 201 Created
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 46
-Date: Wed, 19 Aug 2026 03:25:00 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-
-{
-  "id": 4,
-  "title": "Deploy to production",
-  "done": false
-}
-```
+<img width="1122" height="2627" alt="localhost_3000_docs_" src="https://github.com/user-attachments/assets/314033e4-040c-40db-8d76-ec526788ba99" />
 
 
-### Database Verification & Inspection
 
-Data persists inside a named Docker volume (taskdata).
 
-Database Inspection via psql:
 
-<img width="390" height="350" alt="Captura de tela 2026-08-19 002702" src="https://github.com/user-attachments/assets/0a026750-6bab-4635-bd98-7a3f07857cd6" />
+
+
+
+
+
+
+
+
+
+
+
+
+
