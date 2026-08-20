@@ -185,7 +185,7 @@ app.post('/auth/signup', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-    return res.status(400).json({ error: 'Invalid email or password' });
+    return res.status(400).json({ error: 'Bad Request' });
   }
 
   try {
@@ -198,10 +198,10 @@ app.post('/auth/signup', async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    res.status(201).json({ user: data.user });
+    res.status(201).json({ user: 'Created', data: data.user });
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({});
   }
 });
 
@@ -211,7 +211,7 @@ app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: 'Invalid login credentials' });
   }
 
   try {
@@ -231,7 +231,7 @@ app.post('/auth/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({});
   }
 });
 
@@ -245,8 +245,35 @@ app.post('/auth/login', async (req, res) => {
 //Invalid login test (401 Unauthorized):
 //curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""wrongpassword""}"
 
+// GET /public/info
+app.get('/public/info', async (req, res) => {
+  res.status(200).json({
+    message: '"Welcome stranger! This info is public.',
+  });
+});
 
+// GET /protected/profile
+app.get('/protected/profile', (req, res) => {
+  const authHeader = req.headers['authorization'];
 
+  // Check if header exists and starts with "Bearer "
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  // Extract the token after "Bearer "
+  const token = authHeader.split(' ')[1];
+
+  if (!token || token.trim() === '') {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  // For Stage 2: Token is not validated with Supabase yet
+  res.status(200).json({
+    message: 'Token received (unverified)',
+    token: token
+  });
+});
 
 //port message
 
