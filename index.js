@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const supabase = require('./supabase');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./openapi.json');
 const { pool, initDB } = require('./db');
@@ -11,9 +12,9 @@ app.use(express.json());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Initialize the PostgreSQL database and seed it with initial tasks if empty
-initDB().catch(err => {
-  console.error('Failed to initialize database:', err);
-});
+//initDB().catch(err => {
+//  console.error('Failed to initialize database:', err);
+//});
 
 //Root & Health endpoints
 
@@ -181,6 +182,6 @@ app.delete('/tasks/:id', async (req, res) => {
 //port message
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Example app listening on port ${port} and connected to Supabase`);
 });
 
