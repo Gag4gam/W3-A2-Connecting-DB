@@ -22,105 +22,103 @@
         }
       }
     },
-    "/reset": {
+    "/auth/signup": {
       "post": {
-        "summary": "reset the list of tasks to the initial state",
-        "responses": {
-          "200": {
-            "description": "tasks reset to initial state"
-          } 
-        }
-      }
-    },
-    "/tasks": {
-      "get": {
-        "summary": "list all tasks",
-        "responses": {
-          "200": { "description": "Array with the list of tasks" }
-        }
-      },
-      "post": {
-        "summary": "Create a new task",
+        "summary": "Register a new user",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": ["email", "password"],
                 "properties": {
-                  "title": { "type": "string", "example": "Buy milk" }
-                },
-                "required": ["title"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Task created successfully" },
-          "400": { "description": "Invalid request (missing title)" }
-        }
-      }
-    },
-    "/tasks/{id}": {
-      "get": {
-        "summary": "find a task by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Task found" },
-          "404": { "description": "Task not found" }
-        }
-      },
-      "put": {
-        "summary": "update a task",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": { "type": "string", "example": "Wash dishes" },
-                  "done": { "type": "boolean", "example": true }
+                  "email": { "type": "string", "example": "test@example.com" },
+                  "password": { "type": "string", "example": "password123" }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Task updated successfully" },
-          "400": { "description": "Emmpty/invalid body" },
-          "404": { "description": "Unknown id" }
+          "201": { "description": "User created" },
+          "400": { "description": "Bad Request" }
         }
-      },
-      "delete": {
-        "summary": "Remove a task by ID",
-        "parameters": [
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Log in and obtain JWT token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "test@example.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Access token granted" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/protected/profile": {
+      "get": {
+        "summary": "Get authenticated user profile",
+        "security": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
+            "bearerAuth": []
           }
         ],
         "responses": {
-          "204": { "description": "Task removed (No Content)" },
-          "404": { "description": "Unknown id" }
+          "200": { "description": "User profile data" },
+          "401": { "description": "Unauthorized" }
         }
+      }
+    },
+    "/protected/dashboard": {
+      "get": {
+        "summary": "Get authenticated user dashboard",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": { "description": "User dashboard data" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Log out authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": { "description": "Logged out successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
