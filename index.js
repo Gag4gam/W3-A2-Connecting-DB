@@ -252,36 +252,37 @@ app.get('/public/info', async (req, res) => {
   });
 });
 
-// GET /protected/profile (now toke nverification incldued)
-app.get('/protected/profile', async(req, res) => {
-  const authHeader = req.headers['authorization'];
-
-  // Check if header exists and starts with "Bearer "
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-  const token = authHeader.split(' ')[1];
-
-  if (!token || token.trim() === '') {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  try {
-    const { data: {user}, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid  or expired token' });
-  }
+// GET /protected/profile 
+app.get('/protected/profile', requireAuth, (req, res) => {
   res.status(200).json({
-    id: user.id,
-    email: user.email,
-    created_at: user.created_at,
+    id: req.user.id,
+    email: req.user.email,
+    created_at: req.user.created_at,
   });
+});
+
+// GET /protected/dashboard
+app.get('/protected/dashboard', requireAuth, (req, res) => {
+  res.status(200).json({
+    message: `Welcome to your dashboard, ${req.user.email}!`,
+    userId: req.user.id,
+  });
+});
+
+// POST /auth/logout
+app.post('/auth/logout', requireAuth, async (req, res) => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    // 204 No Content on success
+    res.status(204).send();
   } catch (err) {
-    console.error('Error verifying token:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Logout error:', err);
+    res.status(500).json();
   }
-}); 
+});
 
 //Log in to get a fresh token:
 //curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""password123""}"
@@ -292,8 +293,41 @@ app.get('/protected/profile', async(req, res) => {
 //Tamper test (401 Unauthorized):
 //curl -i http://localhost:3000/protected/profile -H "Authorization: Bearer INVALID_OR_TAMPERED_TOKEN"
 
+//logging out(204 no content)
+//curl -i -X POST http://localhost:3000/auth/logout -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+// Middleware
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Bad request' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  if (!token || token.trim() === '') {
+    return res.status(401).json({ error: 'Bad request' });
+  }
+  try {
+    const {data: {user}, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    req.user = user;
+    req.token = token;
+    next();
+  } catch (err) {
+    console.error('Auth middleware error:', err);
+    res.status(500).json({});
+  }
+}
 
 
+
+  
 //port confirmation message
 
 app.listen(port, () => {
