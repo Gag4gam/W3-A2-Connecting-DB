@@ -179,6 +179,75 @@ app.delete('/tasks/:id', async (req, res) => {
 
 //curl -i -X DELETE http://localhost:3000/tasks/
 
+
+// POST /auth signup endpoint
+app.post('/auth/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Invalid email or password' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password.trim(),
+    }); 
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ user: data.user });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// POST /autg/login
+app.post('/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim(),
+    });
+
+    if (error) {
+      return res.status(400).json({ error: 'Invalid login credentials' });
+    }
+
+    res.status(200).json({ 
+      accessToken: data.session.access_token, 
+      refreshToken: data.session.refresh_token,
+      user: data.user, session: data.session, 
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//tests:
+//Missing password -> 400 Bad Request
+//curl -i -X POST http://localhost:3000/auth/signup -H "Content-Type: application/json" -d "{""email"":""test@example.com""}"
+//sign up new user (201 Created)
+//curl -i -X POST http://localhost:3000/auth/signup -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""password123""}"
+//Log in (200 OK returning access_token):
+//curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""password123""}"
+//Invalid login test (401 Unauthorized):
+//curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""wrongpassword""}"
+
+
+
+
 //port message
 
 app.listen(port, () => {
