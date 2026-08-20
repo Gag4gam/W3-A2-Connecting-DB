@@ -244,7 +244,7 @@ app.post('/auth/login', async (req, res) => {
 //curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""password123""}"
 //Invalid login test (401 Unauthorized):
 //curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""wrongpassword""}"
-
+ 
 // GET /public/info
 app.get('/public/info', async (req, res) => {
   res.status(200).json({
@@ -252,32 +252,53 @@ app.get('/public/info', async (req, res) => {
   });
 });
 
-// GET /protected/profile
-app.get('/protected/profile', (req, res) => {
+// GET /protected/profile (now toke nverification incldued)
+app.get('/protected/profile', async(req, res) => {
   const authHeader = req.headers['authorization'];
 
   // Check if header exists and starts with "Bearer "
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Access token required' });
   }
-
-  // Extract the token after "Bearer "
   const token = authHeader.split(' ')[1];
 
   if (!token || token.trim() === '') {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  // For Stage 2: Token is not validated with Supabase yet
-  res.status(200).json({
-    message: 'Token received (unverified)',
-    token: token
-  });
-});
+  try {
+    const { data: {user}, error } = await supabase.auth.getUser(token);
 
-//port message
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid  or expired token' });
+  }
+  res.status(200).json({
+    id: user.id,
+    email: user.email,
+    created_at: user.created_at,
+  });
+  } catch (err) {
+    console.error('Error verifying token:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}); 
+
+//Log in to get a fresh token:
+//curl -i -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{""email"":""test@example.com"",""password"":""password123""}"
+
+//Send the valid token (200 OK):
+//curl -i http://localhost:3000/protected/profile -H "Authorization: Bearer YOUR_COPIED_ACCESS_TOKEN"
+
+//Tamper test (401 Unauthorized):
+//curl -i http://localhost:3000/protected/profile -H "Authorization: Bearer INVALID_OR_TAMPERED_TOKEN"
+
+
+
+//port confirmation message
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port} and connected to Supabase`);
 });
+
+
 
